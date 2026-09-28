@@ -137,3 +137,45 @@
 - [ ] Indexes verified
 - [ ] Query performance checked
 - [ ] Backup/recovery tested
+
+
+
+TASK TESTS
+
+[ ] Valid task can be created
+[ ] Active task requires started_at
+[ ] Completed task requires completed_at
+[ ] Empty title rejected
+[ ] Title > 200 characters rejected
+[ ] Invalid status rejected
+[ ] Invalid priority rejected
+
+[ ] User can see own task
+[ ] User cannot see another user's task
+[ ] User can update own task
+[ ] User cannot update another user's task
+[ ] User cannot create task for another user
+[ ] Anonymous user cannot access tasks
+
+[ ] First active task succeeds
+[ ] Second active task fails
+[ ] Completing active task allows another task to become active
+
+[ ] updated_at changes on update
+[ ] Deleting user cascades to tasks
+[ ] Deleting capture sets capture_id to NULL
+
+
+
+FOCUS SESSION SECURITY TESTS
+
+[ ] Same-user task/session relationship
+[ ] Cross-user task/session rejected
+[ ] Non-existent task rejected
+[ ] Task deletion cascades
+[ ] Own session accessible
+[ ] Other user's session inaccessible
+[ ] Anonymous access denied
+[ ] One active session per user
+[ ] Invalid session states rejected
+[ ] Timestamp ordering enforced
