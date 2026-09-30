@@ -8,3 +8,11 @@
 4. npx supabase db push
 
 5. npx supabase status -- open the local Supabase Studio in your browser
+
+6. npm install @supabase/supabase-js
+
+7. npx expo install @react-native-async-storage/async-storage
+
+8. npm install nativewind react-native-reanimated react-native-safe-area-context lucide-react-native react-native-svg
+
+9. npm install @expo/vector-icons

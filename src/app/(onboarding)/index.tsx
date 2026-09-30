@@ -7,6 +7,8 @@ import Animated, {
   interpolate,
   Extrapolation
 } from 'react-native-reanimated';
+import { router } from "expo-router";
+import { appStorage } from "@/lib/storage";
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -42,20 +44,23 @@ export default function OnboardingScreen() {
     setCurrentIndex(index);
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (currentIndex < ONBOARDING_DATA.length - 1) {
       scrollRef.current?.scrollTo({
         x: (currentIndex + 1) * SCREEN_WIDTH,
         animated: true,
       });
-    } else {
-      console.log('Navigate to Main App');
+      return;
     }
+
+    await appStorage.setCompletedOnboarding(true);
+
+    router.replace("/(auth)/Login");
   };
 
   return (
     <SafeAreaView className="flex-1 bg-white justify-between">
-      
+
       {/* 1. TOP HERO LOGO (Fixed Anchor Point above slider) */}
       {/* <View className="items-center pt-6 h-28 justify-center">
         <Image

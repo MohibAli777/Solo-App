@@ -1,10 +1,17 @@
-import { createClient } from '@supabase/supabase-js'
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { createClient } from "@supabase/supabase-js";
 
-const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL
-const supabasePublishableKey = process.env.EXPO_PUBLIC_SUPABASE_KEY
+import { env } from "@/config/env";
 
-if (!supabaseUrl || !supabasePublishableKey) {
-  throw new Error('Missing Supabase URL or Publishable Key')
-}
-
-export const supabase = createClient(supabaseUrl, supabasePublishableKey)
+export const supabase = createClient(
+  env.supabaseUrl,
+  env.supabaseAnonKey,
+  {
+    auth: {
+      storage: AsyncStorage,
+      autoRefreshToken: true,
+      persistSession: true,
+      detectSessionInUrl: false,
+    },
+  }
+);
