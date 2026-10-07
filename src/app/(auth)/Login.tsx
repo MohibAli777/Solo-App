@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -7,188 +7,270 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  StatusBar,
+  Alert,
+  ActivityIndicator,
+  StyleSheet,
+  Pressable
 } from 'react-native';
-import { Feather, Ionicons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
+import * as Haptics from 'expo-haptics';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import { authService } from '@/features/auth/services/auth.service';
 
-export default function LoginScreen() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [focusedInput, setFocusedInput] = useState<string | null>(null);
+const LoginPage: React.FC = () => {
+  const router = useRouter();
+  const passwordRef = useRef<TextInput>(null);
+
+  // States
+  const [email, setEmail] = useState<string>('');
+  const [password, setPassword] = useState<string>('');
+  const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [isFocused, setIsFocused] = useState<string | null>(null);
+  const [statusMsg, setStatusMsg] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+
+  const handleLogin = async () => {
+    // Basic Validation
+
+    const normalizedEmail = email.trim().toLowerCase();
+
+    if (!normalizedEmail || !password) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+      setStatusMsg({ type: 'error', text: 'Please enter your credentials' });
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setStatusMsg(null);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
+      const { data, error } = await authService.signIn(normalizedEmail, password);
+
+      if (error) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        setStatusMsg({ type: 'error', text: error.message });
+        return;
+      }
+
+      if (data.user) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        setStatusMsg({ type: 'success', text: 'Welcome back. Redirecting...' });
+        router.replace("/(main)/Home");
+      }
+
+    } catch (err) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      setStatusMsg({ type: 'error', text: 'An unexpected error occurred' });
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSocialLogin = (provider: string) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    Alert.alert('Info', `${provider} login is coming soon.`);
+  };
 
   return (
-    <View className="flex-1 bg-slate-50">
-      <StatusBar barStyle="dark-content" />
-
-      {/* Decorative Soft Background Glows */}
-      <View className="absolute -top-16 -right-16 w-72 h-72 bg-indigo-200/50 rounded-full blur-3xl" />
-      <View className="absolute top-1/2 -left-20 w-72 h-72 bg-blue-200/40 rounded-full blur-3xl" />
-
+    <SafeAreaView className="flex-1 bg-white" edges={['top']}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         className="flex-1"
       >
         <ScrollView
-          contentContainerClassName="flex-grow justify-center px-6 py-10"
+          contentContainerStyle={{ flexGrow: 1 }}
+          className="px-8"
           showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
+          bounces={false}
         >
-          {/* Top Brand / Logo Header */}
-          <View className="items-center mb-8">
-            <View className="w-16 h-16 rounded-2xl bg-slate-900 items-center justify-center shadow-xl shadow-slate-900/20 border border-slate-700/30">
-              <Ionicons name="shield-checkmark" size={28} color="#ffffff" />
+          {/* Header Section */}
+          <View className="mt-10 mb-12 items-center">
+            <View className="w-52 h-8 mb-6 items-center justify-center">
+              <Image
+                source={require('@/assets/images/branding/logo.png')}
+                style={{ width: '100%', height: '100%' }}
+                contentFit="contain"
+                transition={500}
+              />
             </View>
 
-            <Text className="text-3xl font-black text-slate-900 tracking-tight mt-5 mb-1.5">
-              Welcome back
+            <Text className="text-5xl font-bold text-zinc-900 tracking-[-3px] leading-[0.9] text-center">
+              Welcome Back.
             </Text>
-            <Text className="text-slate-500 text-sm font-medium text-center">
-              Sign in to your account to continue
+
+            <Text className="text-zinc-400 text-lg mt-4 leading-7 font-medium text-center max-w-[240px]">
+              Stay focused.{"\n"}Finish what matters.
             </Text>
           </View>
 
-          {/* Elevated Main Card Container */}
-          <View className="bg-white/80 border border-white/80 rounded-3xl p-6 shadow-2xl shadow-slate-200/80">
-            {/* Email Field */}
-            <View className="mb-4">
-              <Text className="text-slate-800 text-xs font-bold uppercase tracking-wider mb-2">
-                Email Address
+          {/* Inline Message Banner */}
+          {statusMsg && (
+            <View className={`mb-6 p-4 rounded-2xl border ${statusMsg.type === 'success' ? 'bg-emerald-50 border-emerald-100' : 'bg-red-50 border-red-100'}`}>
+              <Text className={`text-center font-bold text-sm ${statusMsg.type === 'success' ? 'text-emerald-700' : 'text-red-700'}`}>
+                {statusMsg.text}
               </Text>
-              <View
-                className={`flex-row items-center bg-slate-100/70 border rounded-2xl px-4 py-3.5 ${focusedInput === 'email'
-                    ? 'border-slate-900 bg-white shadow-md shadow-slate-900/5'
-                    : 'border-slate-200/80'
-                  }`}
-              >
-                <Feather
-                  name="mail"
-                  size={19}
-                  color={focusedInput === 'email' ? '#0f172a' : '#94a3b8'}
-                />
-                <TextInput
-                  value={email}
-                  onChangeText={setEmail}
-                  onFocus={() => setFocusedInput('email')}
-                  onBlur={() => setFocusedInput(null)}
-                  placeholder="name@company.com"
-                  placeholderTextColor="#94a3b8"
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  className="flex-1 ml-3 text-slate-900 text-sm font-medium p-0"
-                />
-              </View>
             </View>
+          )}
 
-            {/* Password Field */}
-            <View className="mb-1">
-              <Text className="text-slate-800 text-xs font-bold uppercase tracking-wider mb-2">
-                Password
-              </Text>
-              <View
-                className={`flex-row items-center bg-slate-100/70 border rounded-2xl px-4 py-3.5 ${focusedInput === 'password'
-                    ? 'border-slate-900 bg-white shadow-md shadow-slate-900/5'
-                    : 'border-slate-200/80'
-                  }`}
-              >
-                <Feather
-                  name="lock"
-                  size={19}
-                  color={focusedInput === 'password' ? '#0f172a' : '#94a3b8'}
-                />
-                <TextInput
-                  value={password}
-                  onChangeText={setPassword}
-                  onFocus={() => setFocusedInput('password')}
-                  onBlur={() => setFocusedInput(null)}
-                  placeholder="••••••••••••"
-                  placeholderTextColor="#94a3b8"
-                  secureTextEntry={!showPassword}
-                  className="flex-1 ml-3 text-slate-900 text-sm font-medium p-0"
-                />
-                <TouchableOpacity
-                  onPress={() => setShowPassword(!showPassword)}
-                  hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-                >
-                  {showPassword ? (
-                    <Feather name="eye-off" size={19} color="#64748b" />
-                  ) : (
-                    <Feather name="eye" size={19} color="#64748b" />
-                  )}
-                </TouchableOpacity>
-              </View>
-            </View>
+          {/* Form Section */}
+          <View className="gap-4">
+            <TextInput
+              value={email}
+              onChangeText={(text) => { setEmail(text); setStatusMsg(null); }}
+              onFocus={() => setIsFocused('email')}
+              onBlur={() => setIsFocused(null)}
+              placeholder="Email Address"
+              placeholderTextColor="#A1A1AA"
+              keyboardType="email-address"
+              autoCapitalize="none"
+              editable={!loading}
+              className="bg-zinc-50 border rounded-[22px] px-6 py-5 text-zinc-900 text-base"
+              style={[
+                isFocused === 'email' ? styles.focusedBorder : styles.defaultBorder,
+                loading && styles.loadingOpacity
+              ]}
+            />
 
-            {/* Forgot Password Link */}
-            <TouchableOpacity className="self-end py-2.5 mb-2">
-              <Text className="text-slate-900 text-xs font-bold tracking-tight">
-                Forgot password?
-              </Text>
-            </TouchableOpacity>
-
-            {/* Primary Action Button */}
-            <TouchableOpacity
-              activeOpacity={0.88}
-              className="bg-slate-900 rounded-2xl py-4 flex-row items-center justify-center shadow-lg shadow-slate-900/25 active:bg-slate-800"
+            <Pressable
+              onPress={() => passwordRef.current?.focus()}
+              className="flex-row items-center bg-zinc-50 border rounded-[22px] px-6"
+              style={[
+                isFocused === 'password' ? styles.focusedBorder : styles.defaultBorder,
+                loading && styles.loadingOpacity
+              ]}
             >
-              <Text className="text-white text-sm font-bold mr-2">
-                Sign In
-              </Text>
-              <Feather name="arrow-right" size={17} color="#ffffff" />
+              <TextInput
+                ref={passwordRef}
+                value={password}
+                onChangeText={(text) => { setPassword(text); setStatusMsg(null); }}
+                onFocus={() => setIsFocused('password')}
+                onBlur={() => setIsFocused(null)}
+                placeholder="Password"
+                placeholderTextColor="#A1A1AA"
+                secureTextEntry={!showPassword}
+                editable={!loading}
+                className="flex-1 py-5 text-zinc-900 text-base"
+              />
+              <TouchableOpacity
+                onPress={() => {
+                  setShowPassword(!showPassword);
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                }}
+                className="ml-2"
+                disabled={loading}
+              >
+                <Ionicons
+                  name={showPassword ? "eye-off-outline" : "eye-outline"}
+                  size={22}
+                  color="#A1A1AA"
+                />
+              </TouchableOpacity>
+            </Pressable>
+
+            <TouchableOpacity
+              className="mt-4 self-center"
+              activeOpacity={0.5}
+              onPress={() => Haptics.selectionAsync()}
+              disabled={loading}
+            >
+              <Text className="text-zinc-400 text-sm font-semibold tracking-tight">Forgot Password?</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Primary Action */}
+          <View className="mt-8">
+            <TouchableOpacity
+              onPress={handleLogin}
+              disabled={loading}
+              activeOpacity={0.8}
+              className={`w-full py-5 rounded-[24px] items-center justify-center overflow-hidden ${loading ? 'bg-zinc-800' : 'bg-zinc-900 shadow-2xl shadow-black/40'
+                }`}
+            >
+              {loading ? (
+                <View className="flex-row items-center">
+                  <ActivityIndicator color="white" size="small" />
+                  <Text className="text-white font-bold text-lg tracking-tight ml-3">Authenticating...</Text>
+                </View>
+              ) : (
+                <View className="flex-row items-center justify-center">
+                  <Text className="text-white font-bold text-lg tracking-tight mr-2">Sign In to Continue</Text>
+                  <Ionicons name="chevron-forward" size={20} color="white" />
+                </View>
+              )}
             </TouchableOpacity>
 
             {/* Divider */}
-            <View className="flex-row items-center my-6">
-              <View className="flex-1 h-[1px] bg-slate-200" />
-              <Text className="text-slate-400 text-xs font-bold px-3 uppercase tracking-widest">
-                Or continue with
-              </Text>
-              <View className="flex-1 h-[1px] bg-slate-200" />
+            <View className="flex-row items-center mt-10 mb-8">
+              <View className="flex-1 h-[0.5px] bg-zinc-200" />
+              <Text className="mx-6 text-zinc-300 font-bold text-[9px] tracking-[2px] uppercase">Secure Login</Text>
+              <View className="flex-1 h-[0.5px] bg-zinc-200" />
             </View>
 
-            {/* Social Logins */}
-            <View className="flex-row gap-3">
-              {/* Google Button */}
-              <TouchableOpacity
-                activeOpacity={0.75}
-                className="flex-1 flex-row items-center justify-center bg-white border border-slate-200/90 rounded-2xl py-3.5 px-3 shadow-sm active:bg-slate-50"
-              >
-                <Text className="text-slate-900 font-black text-base mr-2">
-                  G
-                </Text>
-                <Text className="text-slate-800 text-sm font-bold">
-                  Google
-                </Text>
-              </TouchableOpacity>
-
-              {/* Apple Button */}
-              <TouchableOpacity
-                activeOpacity={0.75}
-                className="flex-1 flex-row items-center justify-center bg-white border border-slate-200/90 rounded-2xl py-3.5 px-3 shadow-sm active:bg-slate-50"
-              >
-                <Text className="text-slate-900 font-black text-base mr-2">
-                  
-                </Text>
-                <Text className="text-slate-800 text-sm font-bold">
-                  Apple
-                </Text>
-              </TouchableOpacity>
+            {/* Social Login Row */}
+            <View className="flex-row gap-4">
+              {['Google', 'Apple'].map((provider) => (
+                <TouchableOpacity
+                  key={provider}
+                  onPress={() => handleSocialLogin(provider)}
+                  disabled={loading}
+                  activeOpacity={0.7}
+                  className="flex-1 py-4 rounded-[20px] bg-zinc-50 border border-zinc-100 flex-row items-center justify-center"
+                >
+                  <Image
+                    source={
+                      provider === 'Google'
+                        ? require('@/assets/images/google-logo.png')
+                        : require('@/assets/images/apple-logo.png')
+                    }
+                    style={{ width: 24, height: 24, marginRight: 10 }}
+                    contentFit="contain"
+                  />
+                  <Text className="text-zinc-900 font-bold text-sm tracking-tight">{provider}</Text>
+                </TouchableOpacity>
+              ))}
             </View>
           </View>
 
-          {/* Footer Navigation */}
-          <View className="flex-row justify-center items-center mt-8">
-            <Text className="text-slate-500 text-sm font-medium">
-              Don't have an account?{' '}
-            </Text>
-            <TouchableOpacity>
-              <Text className="text-slate-900 text-sm font-black border-b border-slate-900 pb-0.5">
-                Create account
+          {/* Footer */}
+          <View className="my-auto py-8 items-center">
+            <TouchableOpacity
+              activeOpacity={0.7}
+              disabled={loading}
+              onPress={() => {
+                Haptics.selectionAsync();
+                router.replace("/(auth)/Signup");
+              }}
+            >
+              <Text className="text-zinc-400 text-sm font-medium tracking-tight">
+                New to SOLO? <Text className="text-zinc-900 font-bold">Join the list</Text>
               </Text>
             </TouchableOpacity>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
-    </View>
+    </SafeAreaView>
   );
-}
+};
+
+const styles = StyleSheet.create({
+  focusedBorder: {
+    borderColor: '#18181b', // zinc-900
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  defaultBorder: {
+    borderColor: '#f4f4f5', // zinc-100
+  },
+  loadingOpacity: {
+    opacity: 0.5,
+  }
+});
+
+export default LoginPage;

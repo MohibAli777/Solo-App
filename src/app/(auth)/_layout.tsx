@@ -5,15 +5,13 @@ export default function AuthLayout() {
     <Stack
       screenOptions={{
         headerShown: false,
-        animation: "slide_from_right",
+        animation: "fade",
         gestureEnabled: true,
         contentStyle: {
           backgroundColor: "#FFFFFF",
         },
       }}
     >
-      {/* <Stack.Screen name="Login" />
-      <Stack.Screen name="Signup" /> */}
     </Stack>
   );
 }

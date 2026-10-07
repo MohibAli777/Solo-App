@@ -16,3 +16,5 @@
 8. npm install nativewind react-native-reanimated react-native-safe-area-context lucide-react-native react-native-svg
 
 9. npm install @expo/vector-icons
+
+10. npx expo install expo-haptics

@@ -18,7 +18,7 @@ export default function Index() {
         if (!mounted) return;
 
         if (completed) {
-          router.replace("/(auth)/login");
+          router.replace("/(auth)/Login");
         } else {
           router.replace("/(onboarding)");
         }
