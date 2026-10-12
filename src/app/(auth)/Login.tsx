@@ -58,7 +58,7 @@ const LoginPage: React.FC = () => {
       if (data.user) {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         setStatusMsg({ type: 'success', text: 'Welcome back. Redirecting...' });
-        router.replace("/(main)/Home");
+        router.replace("/(main)");
       }
 
     } catch (err) {
